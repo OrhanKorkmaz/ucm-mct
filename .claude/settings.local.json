@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import torch; print\\('torch', torch.__version__, 'mps:', torch.backends.mps.is_available\\(\\)\\)\")",
+      "Bash(python3 -c \"import transformers; print\\('transformers', transformers.__version__\\)\")",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/macbook/miniconda3/bin/**)",
+      "Read(//Users/macbook/anaconda3/bin/**)",
+      "Read(//Users/macbook/.pyenv/**)",
+      "Read(//Users/macbook/.cache/huggingface/**)",
+      "Bash(python3 -m venv /Users/macbook/Documents/programlar/MCT/.venv)",
+      "Bash(/Users/macbook/Documents/programlar/MCT/.venv/bin/pip install *)",
+      "Bash(/Users/macbook/Documents/programlar/MCT/.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python scripts/01_extract.py)",
+      "Bash(bash scripts/run_all.sh)"
+    ]
+  }
+}

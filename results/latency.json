@@ -1,0 +1,40 @@
+{
+  "variants": {
+    "full_cpu": {
+      "top1": 0.917,
+      "top5": 0.9615,
+      "top20": 0.981,
+      "cosine": 0.7045748233795166,
+      "ms_single": 0.3157,
+      "ms_batch256": 4.758,
+      "params": 4851586
+    },
+    "lowrank64_cpu": {
+      "top1": 0.8645,
+      "top5": 0.9415,
+      "top20": 0.9735,
+      "cosine": 0.5934543609619141,
+      "ms_single": 0.0762,
+      "ms_batch256": 1.034,
+      "params": 943234
+    },
+    "int8_cpu": {
+      "top1": 0.917,
+      "top5": 0.9625,
+      "top20": 0.9805,
+      "cosine": 0.7041643261909485,
+      "ms_single": 0.3868
+    }
+  },
+  "wire": {
+    "fp16_full_vector_bytes": 1792,
+    "hub768_fp16_bytes": 1536,
+    "sae_top32_bytes": 128,
+    "sae_top16_bytes": 64
+  },
+  "ms_text_generate10": 222.8,
+  "ms_text_reencode": 63.1,
+  "ms_text_roundtrip": 285.90000000000003,
+  "ms_vector_channel_single": 0.3157,
+  "speedup_x": 905.6
+}

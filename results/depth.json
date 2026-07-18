@@ -1,0 +1,45 @@
+{
+  "llama_L2->qwen_L3": {
+    "cosine": 0.7104088068008423,
+    "top1": 0.7135,
+    "top5": 0.8175,
+    "top20": 0.873
+  },
+  "qwen_L2->llama_L3": {
+    "cosine": 0.5626175999641418,
+    "top1": 0.8375,
+    "top5": 0.925,
+    "top20": 0.958
+  },
+  "llama_L2->llama_L3": {
+    "cosine": 0.6931455135345459,
+    "top1": 0.993,
+    "top5": 0.9995,
+    "top20": 0.9995
+  },
+  "qwen_L2->qwen_L3": {
+    "cosine": 0.960379421710968,
+    "top1": 0.9935,
+    "top5": 1.0,
+    "top20": 1.0
+  },
+  "llama_L3->qwen_L3": {
+    "cosine": 0.7204088568687439,
+    "top1": 0.725,
+    "top5": 0.8425,
+    "top20": 0.8905
+  },
+  "baseline_procrustes_llama_L2->qwen_L3": {
+    "cosine": 0.4816772937774658,
+    "top1": 0.75,
+    "top5": 0.8675,
+    "top20": 0.908
+  },
+  "baseline_procrustes_llama_L2->llama_L3": {
+    "cosine": 0.6378741264343262,
+    "top1": 0.996,
+    "top5": 1.0,
+    "top20": 1.0
+  },
+  "H5_pass": false
+}

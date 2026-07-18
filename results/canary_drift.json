@@ -1,0 +1,37 @@
+{
+  "reference_top1": 0.8766666666666667,
+  "rows": [
+    {
+      "alpha": 0.05,
+      "canary_cka": 0.9999,
+      "top1_broken": 0.876,
+      "top1_recalibrated": 0.7946666666666666,
+      "recovery_pct": 90.6
+    },
+    {
+      "alpha": 0.1,
+      "canary_cka": 0.9996,
+      "top1_broken": 0.8766666666666667,
+      "top1_recalibrated": 0.7986666666666666,
+      "recovery_pct": 91.1
+    },
+    {
+      "alpha": 0.2,
+      "canary_cka": 0.9985,
+      "top1_broken": 0.8746666666666667,
+      "top1_recalibrated": 0.8106666666666666,
+      "recovery_pct": 92.5
+    },
+    {
+      "alpha": 0.4,
+      "canary_cka": 0.993,
+      "top1_broken": 0.868,
+      "top1_recalibrated": 0.7893333333333333,
+      "recovery_pct": 90.0
+    }
+  ],
+  "rule": {
+    "cka_threshold": null,
+    "note": "kanarya CKA bu e\u015fi\u011fin alt\u0131na inerse Procrustes yeniden-kalibrasyonu tetikle (kapal\u0131-form, ~sn)"
+  }
+}

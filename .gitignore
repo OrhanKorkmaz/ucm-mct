@@ -27,3 +27,10 @@ results/sequence_mct.json
 results/sequence_distill.json
 results/*.log
 .claude/
+# v2 (dizi/diyalog) kozlari — sonraki raporla acilacak
+scripts/29_wild_text.py
+scripts/30_vector_dialogue.py
+results/wild_text.json
+results/vector_dialogue.json
+data/wild_corpus.json
+ENDORSEMENT-TALEP.md

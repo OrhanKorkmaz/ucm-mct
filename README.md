@@ -81,7 +81,7 @@ and a subliminal-channel firewall will be released with the next report.
   author = {Korkmaz, Orhan},
   title  = {UCM-MCT: A Neutral Interlingua for LLM Hidden States},
   year   = {2026},
-  url    = {https://github.com/USERNAME/ucm-mct}
+  url    = {https://github.com/OrhanKorkmaz/ucm-mct}
 }
 ```
 

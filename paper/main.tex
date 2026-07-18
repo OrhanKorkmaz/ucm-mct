@@ -1,0 +1,216 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\title{A Neutral Interlingua for LLM Hidden States:\\
+Micro-Translators, Auditable Vector Channels,\\
+and the Limits of the Shared Representational Core}
+\author{Orhan Korkmaz\\
+\small Independent Researcher\\
+\small \texttt{orhankorkmaz1991@gmail.com}}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Multi-agent LLM systems communicate through natural language, paying a
+decode/re-encode tax in latency and information loss, and---as recent work on
+subliminal learning suggests---potentially carrying hidden, model-specific
+signals. We present a protocol in which frozen, heterogeneous LLMs exchange
+hidden states directly through a jointly learned \emph{neutral hub}: for $N$
+models, $2N$ small encoder/decoder ``micro-translators'' ($\sim$1--5M
+parameters each) replace $N(N{-}1)$ pairwise bridges. On consumer hardware,
+across three independent model families (Llama-3.2-1B, Qwen2.5-0.5B,
+SmolLM2-360M) and a 10{,}000-concept bilingual benchmark, we show:
+(i) translated states preserve identity (up to 88\% top-1 retrieval over a
+10k pool) and geometry (Procrustes rank correlation $\rho=0.995$);
+(ii) after a tuned-lens-style KL-distillation phase, injected translations are
+functionally near-indistinguishable from the receiver's own states (KL ratio
+0.17 vs.\ a random control at concept level; 0.016 at sentence level);
+(iii) a BatchTopK sparse-autoencoder bridge sustains $8\times$ compression at
+a 3.5-point retrieval cost, putting a message at 64--128 bytes;
+(iv) the vector channel is ${\sim}900\times$ faster than a text round-trip;
+(v) adding a third model family \emph{improves} existing routes (+15 points),
+suggesting the shared space is regularized rather than crowded by new members.
+We also report a measured limit: relative translation fidelity is
+language-dependent (English 1.01---lossless; Turkish 0.39) even though every
+model encodes Turkish concepts near-perfectly in isolation, indicating that
+the ``Platonic'' shared core is thick where training distributions overlap
+and thin elsewhere. Code and benchmarks:
+\url{https://github.com/OrhanKorkmaz/ucm-mct}.
+\end{abstract}
+
+\section{Introduction}
+LLM agents today cooperate by generating text that other agents re-read.
+This channel is expensive---every message pays a full decode and re-encode
+cycle---and lossy: graded uncertainty, partial inferences, and other
+non-verbalized state do not survive serialization. Prior work has begun to
+bypass the token bottleneck: activation-level communication between agents
+\cite{ramesh2025activations}, latent-only inter-agent channels
+\cite{interlat2026}, state-delta trajectories \cite{sde2025}, and
+unsupervised embedding-space translation \cite{jha2025vec2vec}. These efforts
+are mostly pairwise: each pair of models needs its own bridge.
+
+We ask a stronger question: can heterogeneous, frozen LLMs share a single
+\emph{neutral} representation space that none of them owns---an interlingua
+for hidden states---so that joining the network costs one encoder and one
+decoder, independent of network size? We call the resulting bridges
+\emph{micro cognitive translators} (MCT).
+
+Our contributions: (1) a complete, reproducible protocol (extraction,
+CKA-based layer pairing, standardization, translator and hub training,
+injection, compression) validated end-to-end on consumer hardware;
+(2) the observation that \emph{functional} compatibility does not follow from
+vector-space proximity, and a distillation recipe that reliably closes the
+gap at both concept and sentence level; (3) a positive scaling result for the
+neutral hub (a third family improves existing routes); and (4) a measured,
+language-dependent limit of cross-model representational overlap that
+constrains any interlingua approach.
+
+\section{Method}
+\paragraph{Micro cognitive translators.} An MCT maps source states
+$x \in \mathbb{R}^{d_A}$ to target states in $\mathbb{R}^{d_B}$:
+\[
+y = \mu_{\text{out}} + s\,W(x-\mu_{\text{in}}) + g\cdot\mathrm{MLP}(x-\mu_{\text{in}}),
+\]
+with $W$ initialized by orthogonal Procrustes on training pairs and kept
+semi-orthogonal by a soft penalty $\lVert W^\top W - I\rVert^2$ (hard
+orthogonality parametrizations were numerically unstable in our setting);
+$g$ gates a residual MLP that starts at zero. All training operates on
+per-dimension z-standardized activations---indispensable in practice because
+massive-activation dimensions otherwise dominate every objective.
+
+\paragraph{Neutral hub.} Each model $m$ contributes spokes (selected layers)
+with an encoder $E_{m}$ into a shared $d_h$-dimensional space and a decoder
+$D_{m}$ back. The hub is trained jointly with symmetric InfoNCE across all
+spoke pairs, reconstruction, cross-translation anchors, and vec2vec-style
+cycle consistency ($A\!\to\!\text{hub}\!\to\!B\!\to\!\text{hub}\!\to\!A$).
+No pairwise translators are trained; every route goes through the hub.
+
+\paragraph{Functional alignment by distillation.} Vector-space training
+alone produces translations that are \emph{close} (cosine $\approx$ 0.73)
+yet \emph{functionally destructive} when injected: the residual error is
+out-of-distribution for the receiver's downstream layers. We therefore add a
+tuned-lens-style phase: the translated vector is injected into the frozen
+receiver at the target layer (single position, norm-calibrated), and the KL
+divergence between the resulting next-token distribution and the receiver's
+clean distribution is minimized, with gradients flowing only into the
+translator. This phase moved concept-level injection agreement from 27\% to
+81\%, and sentence-level agreement from 27\% to 83\% (KL ratio 0.016).
+
+\paragraph{Compression.} Messages are hub vectors passed through a BatchTopK
+sparse autoencoder with an auxiliary dead-feature revival loss; only the
+$(index, value)$ pairs of the $k$ active features travel.
+
+\section{Experimental setup}
+Models: Llama-3.2-1B (16 layers, $d=2048$), Qwen2.5-0.5B (24 layers,
+$d=896$), SmolLM2-360M (32 layers, $d=960$); all frozen, bfloat16, Apple M2
+(16 GB). Benchmark: 10{,}000 frequency-ranked concepts (8{,}000 English,
+2{,}000 Turkish), 80/20 split; contextual last-token states under
+concept-final templates; layer pairs selected by linear CKA within relative
+depth bands. Injection protocol: three conditions (clean / translated /
+random real vector), single-position replacement with norm calibration.
+
+\section{Results}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+Claim & Metric & Result \\
+\midrule
+Geometry preserved & Procrustes rank corr. & $\rho=0.995$ \\
+Identity preserved & top-1 retrieval (10k pool) & up to 88\% \\
+Function preserved & KL ratio vs.\ random & 0.17 (concept), 0.016 (sentence) \\
+Compression & top-1 drop @ $8\times$ & $-3.5$ pts, 0 dead features \\
+Depth translation & cosine ($L_2\!\to\!\text{hub}\!\to\!L_3$) & 0.778 \\
+Channel latency & ms/message & 0.32 vs.\ 286 text (${\sim}900\times$) \\
+Third family joins & effect on existing routes & $+15$ pts \\
+\bottomrule
+\end{tabular}
+\caption{Headline results. Every row maps to a JSON artifact in the public
+repository.}
+\end{table}
+
+\paragraph{Scaling behavior.} With two families, the semantic route
+Llama$\to$Qwen reached 72.5\% top-1 through the hub. Adding SmolLM2-360M
+(two new translators only) raised it to 87.7\%, and all six cross-family
+routes landed at 79--88\%. New members appear to act as regularizers of the
+shared space, analogously to multilingual training.
+
+\paragraph{The relative-fidelity limit.} We measure each model's
+\emph{self-consistency ceiling} (retrieving a concept encoded under one
+template from a pool encoded under another; $\geq$0.98 for both languages in
+all models) and compare cross-model translation against it. English:
+0.988/0.979 = 1.01---the channel is lossless. Turkish: 0.387/0.988 = 0.39.
+Both libraries know Turkish; their Turkish \emph{geometries} do not align.
+Functional distillation at sentence level narrows the Turkish gap
+substantially (72\% vs.\ 86\% agreement), indicating that functional
+alignment is easier than identity alignment where the shared core is thin.
+
+\paragraph{Robustness.} Simulated representation drift (mixing 40\% of an
+adjacent layer's geometry plus noise) cost only $\sim$1 point through the
+hub; a 500-concept canary set with closed-form Procrustes repair restores
+performance when degradation does occur, and should be triggered only below
+a degradation threshold---premature recalibration on small canaries hurts.
+
+\section{Related work}
+Model stitching \cite{lenc2015,bansal2021}; activation communication between
+agents \cite{ramesh2025activations}; latent-only communication
+\cite{interlat2026}; state-delta encoding \cite{sde2025}; unsupervised
+embedding translation \cite{jha2025vec2vec}; tuned lens \cite{belrose2023};
+crosscoders and model diffing \cite{anthropic2025crosscoders}; subliminal
+learning \cite{cloud2025subliminal}; introspective detection of injected
+concepts \cite{lindsey2025introspection}. Our work differs in the N-model
+neutral-hub formulation, the cross-model depth translation, the
+distillation-based functional alignment recipe, and the measured
+language-dependence of the shared core.
+
+\section{Limitations and safety}
+All models are $\leq$1B parameters; scale generalization is untested.
+Sentence-level results use template-generated contexts, not free text.
+The receiver could not name injected concepts (0\% at 0.5B), consistent with
+introspection emerging at scale. A vector channel is a new attack surface;
+we propose (and will evaluate) an SAE-based firewall that passes shared
+semantic features and drops model-exclusive components---the same mechanism
+that makes the channel auditable makes it defensible.
+
+\section{Conclusion}
+A neutral interlingua for LLM hidden states is buildable today, on a laptop:
+identity, geometry, function, compression, and speed all survive
+translation, and the hub improves as families join. The measured thinness of
+the shared core outside high-resource language regions is, to our knowledge,
+the first quantitative boundary drawn for this family of approaches---and a
+concrete target for making machine communication genuinely universal.
+
+\begin{thebibliography}{9}
+\bibitem{ramesh2025activations} V.~Ramesh, K.~Li.
+Communicating Activations Between Language Model Agents. ICML 2025.
+\bibitem{interlat2026} Z.~Wang et al.
+Enabling Agents to Communicate Entirely in Latent Space. ACL 2026.
+\bibitem{sde2025} Y.~Tang et al.
+Augmenting Multi-Agent Communication with State Delta Trajectory. arXiv:2506.19209.
+\bibitem{jha2025vec2vec} R.~Jha, C.~Zhang, V.~Shmatikov, J.~Morris.
+Harnessing the Universal Geometry of Embeddings. NeurIPS 2025.
+\bibitem{belrose2023} N.~Belrose et al.
+Eliciting Latent Predictions from Transformers with the Tuned Lens. arXiv:2303.08112.
+\bibitem{lenc2015} K.~Lenc, A.~Vedaldi.
+Understanding Image Representations by Measuring Their Equivariance and Equivalence. CVPR 2015.
+\bibitem{bansal2021} Y.~Bansal, P.~Nakkiran, B.~Barak.
+Revisiting Model Stitching to Compare Neural Representations. NeurIPS 2021.
+\bibitem{anthropic2025crosscoders} Anthropic Interpretability Team.
+Insights on Crosscoder Model Diffing. transformer-circuits.pub, 2025.
+\bibitem{cloud2025subliminal} A.~Cloud et al.
+Subliminal Learning: Language Models Transmit Behavioral Traits via Hidden
+Signals in Data. arXiv:2507.14805.
+\bibitem{lindsey2025introspection} J.~Lindsey.
+Emergent Introspective Awareness in Large Language Models.
+transformer-circuits.pub, 2025.
+\end{thebibliography}
+
+\end{document}
